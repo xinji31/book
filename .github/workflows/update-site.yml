@@ -2,19 +2,22 @@ name: update site
 
 on:
   push:
-    branches: ["master", "test"]
+    branches: ["master"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     environment:
       name: build-site
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,14 +27,13 @@ jobs:
         run: |
           npm ci
           npm run build
-      - name: Commit files 
-        run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add dist
-          git commit -m "_update dist"
-      - name: Push changes
-        uses: ad-m/github-push-action@master
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+          path: dist
+          name: github-pages
+      - name: Deploy
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
+        id: deployment
