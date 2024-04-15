@@ -1,0 +1,16 @@
+{
+  "name": "book-test",
+  "version": "1.0.0",
+  "description": "book content",
+  "main": "build.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node build.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "gitlog": "^4.0.8"
+  }
+}
