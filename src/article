@@ -1,20 +1,14 @@
-命题: $U =( \mathbb{Q} ) ^2 \cup (R \backslash\mathbb{Q})^2$  是连通集.
+在定义切空间的时候想到的一个问题：
 
-这听起来似乎很荒谬,但是事实是他不仅是连通的,甚至是道路连通的,考虑如何证明这个问题.
+一般来说 $R^n$ 有两种定义：（1）n 个 R 的直积（2）维数为 n 的 R-线性空间。第一种定义直接指定了坐标，第二种定义没有指定坐标，但是作为**赋范**空间，其定义必然指定了原点。
 
-一个平凡的事实是,如果 $A, B \in \mathbb{Q}^2$ 那么显然有 $\text{path}(AB)  \subset U$ (记 为 $\text{path}(AB)$ 之间的线段/或者是两条折线).
-考虑令 $A = (p, q), B = (r, s) \in \mathbb R ^ 2$, 那么 $a_i = \left(\frac{\lfloor 2 ^ i p\rfloor}{2 ^ i}, \frac{\lfloor 2 ^ i q\rfloor}{2 ^ i}\right), b_i = \left(\frac{\lfloor 2 ^ i r\rfloor}{2 ^ i}, \frac{\lfloor 2 ^ i s\rfloor}{2 ^ i}\right)$, 于是我们有 $\lim\limits _{n \rightarrow \infty} a_n = A, \lim\limits _{n \rightarrow \infty} b_n = B$.
+但是对于更一般的几何直观来说，我们更希望 $R^n$ 被实现为**距离**空间，即没有预先指定的原点，只有在给定两个点的情况下才能得到一个 n 维的向量。
+对于很多几何上的问题，为了方便起见，我们往往需要后验地取定原点与坐标，如果能直接实现不依赖原点的 $R^n$ 距离空间，那在指定原点时就不必证明已有的工作在平移变换下保持不变（虽然这往往是显然的）。
 
-定义函数 $f_n(x):[0, 1] \rightarrow U, n \ge 0$,其中 $f_0(t) = (1 - t) a_0 + b_0$,对于 $n \ge 1$ 定义
+一个不成熟的想法是 $\text{Euclid}(n):=(U,\phi:U\times U\to R^n)$ 并满足：
 
-$$
-f_n(t) =\begin{cases}  f_{n-1} (t) & t \in \left[\frac{1}{2 ^ {n-1}}, 1 - \frac{1}{2 ^{n-1}}\right]\\ \text{path} (b_{n-1},b_n)  & t \in \left( 1 - \frac{1}{2^{n-1}}, 1 - \frac{1}{2 ^ n}\right]  \\ \text{path} (a_{n},b_{n-1})  & t \in \left[\frac{1}{2 ^ n}, \frac{1}{2 ^ {n-1}}\right) \\ 0 &  \text{else}\end{cases}\\ 
-$$
++ $\text{dis}(u,v):=|\phi(u,v)|$
++ $\phi(u_1,u_2) + \phi(u_2, u_3) = \phi(u_1, u_3)$
++ $\phi_u:U\to R^n:=v\mapsto (v-u)$ 是双射（即确定一个点以后有 $U\to R^n$ 的双射，也可以几何地理解为存在 $(U,R^n)\to U$ 的双射，即一个点加一个向量能确定另一个点）。
 
-考虑函数 $f(x):(0,1) \rightarrow U, f(x) = \lim\limits_{n \rightarrow \infty} f_n (x)$, 首先有 $f(x)$ 在 $(0,1)$ 上显然连续.
-
-而后定义 $f(0) = \lim\limits_{t\rightarrow 0} f(t),  f(1) = \lim\limits_{t\rightarrow 1} f(t)$,那么我们就有 $f(0) = \lim\limits_{t\rightarrow 0} f(t)  = \lim\limits_{n\rightarrow \infty} f(\frac{1}{2 ^ n}) = A,f(1) = \lim\limits_{t\rightarrow 1} f(t)  = \lim\limits_{n\rightarrow \infty} f(1-\frac{1}{2 ^ n}) = B$,则 $f$ 在 $[0,1]$ 上连续,并且 $\forall t \in (0, 1),  f(t) \in U$,这也就证明了 $A, B$ 之间存在一条 $U$​ 中的道路.
-
-
-
-这真的对吗((请哥哥们看看)).
+不知道这样的实现是否合理。
