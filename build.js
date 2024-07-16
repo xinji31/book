@@ -9,9 +9,11 @@ const dir = dirname(fileURLToPath(import.meta.url))
  * @typedef {Object} Article
  * @property {string} title
  * @property {Array<string>} tags
+ * @property {string} shadow
  * @property {string} hash
  * @property {string} date
  * @property {string} author
+ * @property {string} authorEmail
  */
 
 /**
@@ -25,11 +27,15 @@ function parseArticle(commit) {
     title: meta.title,
     tags: meta.tags,
     type: meta.type,
+    shadow: meta.shadow,
     hash: commit.hash,
     date: commit.authorDate,
     author: commit.authorName,
+    authorEmail: commit.authorEmail,
   }
 }
+
+const shadowBy = new Map();
 
 const siteInfo = {
   articles: {},
@@ -38,12 +44,19 @@ const siteInfo = {
 (await gitlog({
   repo: dir,
   number: -1,
-  fields: ["hash", "rawBody", "authorDate", "authorName"]
+  fields: ["hash", "rawBody", "authorDate", "authorName", "authorEmail"]
 })).forEach(commit => {
   if (!commit.rawBody.startsWith("_")) {
     try {
-      siteInfo.articles[commit.hash] = parseArticle(commit)
-      siteInfo.previewList.push(commit.hash)
+      // not shadowed or not shadowed by other user
+      if (shadowBy.get(commit.hash) !== commit.authorEmail) {
+        const art = parseArticle(commit)
+        siteInfo.articles[commit.hash] = art
+        siteInfo.previewList.push(commit.hash)
+        if (art.shadow) {
+          shadowBy.set(art.shadow, art.authorEmail)
+        }
+      }
     } catch (e) {
       console.error(`build warning: building commit ${commit.hash} failed.`)
       console.error(e.message)
