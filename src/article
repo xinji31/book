@@ -1,26 +1,17 @@
+# FAQ
 
-首先，对于 $A-xB$ 做合同变换不改变多项式的根
+## 有关 Github Personal Access Token
 
-对于 $B$ 而言我们发现合同对角化实际上与实数性质无关，在复数域上依然可以归纳证明 $B$ 合同对角化
+### 为什么需要 Github Personal Access Token ?
 
-复数域上对开根是封闭的，即可得到 $C^TBC=I_n$
+在小绿书发布文章时, 网页将代您向托管与 Github 上的数据仓库提交一次 commit, 此时需要 Github Personal Access Token 验证. 若您只需浏览已有文章和进行评论, 则无需进行此操作.
 
-又有此时 $|A-xI_n|=\prod_{i=1}^n(\lambda _i-x)$ 其中 $\lambda_i$ 互不相同
+### 如何生成 Github Personal Access Token ?
 
-则 $A$ 有线性无关特征向量 $\alpha _1,\cdots,\alpha _n$
+访问 https://github.com/settings/tokens/new, 生成时需要勾选 repo 权限. 生成后请将其安全地储存在本地, 用于不同设备端的登陆.
 
-又 $A^T=A$
+### Github Personal Access Token 安全吗 ?
 
-则
+您的 token 将被安全地储存在浏览器本地, 仅当调用 Github RESTAPI 时才作为请求的一部分发送.
 
-$$
-    \alpha _i^T A \alpha _j=\lambda_i \alpha _i^T\alpha _j=\lambda_j \alpha _i^T\alpha _j\\
-    \Rightarrow \forall i\neq j,\alpha _i^T\alpha _j=0\\
-    Q:=(\alpha _1,\cdots,\alpha _n)\\
-    r(Q)=n,r(Q^T Q)=n\\
-    Q^T Q=\text{diag}\{\alpha _1^T\alpha _1,\cdots,\alpha _n^T\alpha _n\}\\
-    \Rightarrow \theta_i^2=\alpha _i^T\alpha _i\neq 0\\
-    P:=(\alpha _1/\theta _1,\cdots,\alpha _n/\theta _n)\\
-    P^T P=I_n,P^T A P=\text{diag}\{\lambda_1,...,\lambda_n\}\\
-    \square
-$$
+由于 Github Fine-grained tokens 目前仍不支持组织仓库的访问, 故目前仍需使用 classic token. 这个 token 具有写入所有您的仓库的权限, 请妥善保管.
