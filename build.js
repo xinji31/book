@@ -48,14 +48,14 @@ const siteInfo = {
 })).forEach(commit => {
   if (!commit.rawBody.startsWith("_")) {
     try {
+			const art = parseArticle(commit)
+			if (art.shadow) {
+				shadowBy.set(art.shadow, art.authorEmail)
+			}
       // not shadowed or not shadowed by other user
       if (shadowBy.get(commit.hash) !== commit.authorEmail) {
-        const art = parseArticle(commit)
         siteInfo.articles[commit.hash] = art
         siteInfo.previewList.push(commit.hash)
-        if (art.shadow) {
-          shadowBy.set(art.shadow, art.authorEmail)
-        }
       }
     } catch (e) {
       console.error(`build warning: building commit ${commit.hash} failed.`)
