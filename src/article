@@ -1,1 +1,82 @@
-test
+# 如何在 Apple Silicon Mac 上 优雅地使用 Vivado
+
+TL;DR：Orbstack(rosetta x86) + xquartz + openfpgaloaer
+
+## Requirements
+
+本地环境是 M4Pro + 48G RAM，但 orbstack 非常轻量，16G 内存应该就可以运行。需要 64G 硬盘空间。
+
+## Orbstack
+
+GPT：OrbStack 是一个高性能的 macOS 虚拟化和容器管理工具，主要用于运行 Docker 和 Linux 虚拟机。它被设计为 Docker Desktop 的轻量级替代品，具有更快的性能、更低的资源占用以及更好的 macOS 原生集成。
+
+TL；DR：Linux 虚拟机，rosetta x86，同时可以代替软工用的 Docker Desktop。
+
+安装：<https://orbstack.dev/download>
+
+先不着急把 docker desktop 扬了，第一次启动 orbstack 的时候可以把 docker 的容器迁移过来，迁移完了就可以摆脱又重又慢的 docker desktop 了。
+
+可以在 <https://docs.orbstack.dev> 上找到 orbstack 的更多用法。
+
+在 orbstack - settings - system 中可以调整资源使用限制，鉴于综合/实现一般很慢，可以把限制调大一点。
+
+## Vivado
+
+Vivado 装起来比较麻烦~~并且我也忘了~~，所以直接提供了安装好的虚拟机镜像。
+
+（vivado 安装包有 27G，这个虚拟机压缩以后甚至只有 16G）
+
+下载链接：<https://cloud.tsinghua.edu.cn/d/3c83fabe86da49d78fa0/>
+
+由于你清云盘的神秘特性，文件只能分片上传，下载所有文件后，通过以下命令合并：
+
+```sh
+$ cat vivado.tar.zst.part.* > vivado.tar.zst
+```
+
+sha256 校验：
+
+```
+$ sha256 vivado.tar.zst
+SHA256 (vivado.tar.zst) = b24f61da94d93ab159c7a3607384440d49614cf5974d9d4b1958dbd5c78c209e
+```
+
+在 orbstack 中 Linux Machines 标签页下导入即可。在终端中使用
+
+```sh
+$ orb -m vivado
+```
+
+即可启动虚拟机。初始用户 jack，初始密码 123456 （虽然应该用不上），初始 shell 为 fish。
+
+## GUI
+
+orbstack 没有提供 xserver。在 macos 中下载安装 xquartz，在 Settings - Security 中勾选 Allow connection from network clients （即允许通过网络连接），同时保持 Authenticate connections 为勾选状态。
+
+在 vivado 虚拟机中，需要配置 DISPLAY 以及 xauth 的 cookie。在用户目录中，通过上箭头查找历史记录可以找到如下（毫无原则的）命令：
+
+```sh
+$ export DISPLAY=host.docker.internal:0 && xauth add host.docker.internal:0 . (mac xauth list | tail -n 1 | cut -d " " -f 5)
+```
+
+在确保 macos 中的 xquartz 开启后，运行此命令，~~大概率~~ 就能配置好。欢迎大家研究一下 xauth 并给个更靠谱的方式。
+
+可以在终端中运行 `xeyes` 检测，如果看到一双眼睛则配置成功。
+
+## Vivado
+
+在用户目录中，（同样可以在历史记录中找到）运行：
+
+```sh
+$ ./vivado/Xilinx/Vivado/2019.2/bin/vivado
+```
+
+即可启动 Vivado。
+
+Vivado 的文本编辑器比较简单，我将其改成了在 macos 中的 vscode 中打开编辑。确保在 macos 的终端中可以通过 code 启动 vscode（默认应该是可以的），此时在 vivado 里双击文件就会在外面的 vscode 里打开。
+
+## USB
+
+orbstack 目前还不支持 usb passthrough，所以没法让 vivado 检测到 fpga 并进行烧录。
+
+目前的解决方案是，使用 vivado 导出 bitstream，再在 macos 中通过 openfpgaloader 烧录，这一步可能需要大家自己探索（我还没验证过）。探索成功的可以在评论区分享一下。
