@@ -1,119 +1,97 @@
-## Some Notations
+# 如何在 Apple Silicon Mac 上 优雅地使用 Vivado
 
-On the simplex method
+TL;DR：Orbstack(rosetta x86) + xquartz + openfpgaloaer
 
+## Requirements
 
-**Canonical Form**
+本地环境是 M4Pro + 48G RAM，但 orbstack 非常轻量，16G 内存应该就可以运行。需要 64G 硬盘空间。
 
-> Objective: eliminate $x_B$ under the basis $A_B$.
+## Orbstack
 
-Suppose we have a linearly independent $A_B$, then we know can express $Ax$ as $A_Bx_B+A_Nx_N$, then 
-$$\min c^Tx \quad s.t. \quad Ax=b, x \geqslant 0$$
-becomes
-$$\min c_B^Tx_B+c_N^Tx_N \quad s.t. \quad A_Bx_B+A_Nx_N=b, x_B, x_N \geqslant 0$$
+GPT：OrbStack 是一个高性能的 macOS 虚拟化和容器管理工具，主要用于运行 Docker 和 Linux 虚拟机。它被设计为 Docker Desktop 的轻量级替代品，具有更快的性能、更低的资源占用以及更好的 macOS 原生集成。
 
-Notice $x_B$ is solvable in the equation under the constraint $A_B^{-1}(b-A_Nx_N) \geqslant 0$. So we can simplify the system above as:
+TL；DR：Linux 虚拟机，rosetta x86，同时可以代替软工用的 Docker Desktop。
 
-$$\min c_B^TA_B^{-1}(b-A_Nx_N) + c_N^Tx_N \quad s.t. \quad A_B^{-1}A_Nx_N \leqslant A_B^{-1}b, x_N \geqslant 0\quad $$
+安装：<https://orbstack.dev/download>
 
-this is again equilavent to
+先不着急把 docker desktop 扬了，第一次启动 orbstack 的时候可以把 docker 的容器迁移过来，迁移完了就可以摆脱又重又慢的 docker desktop 了。
 
-$$\min c_B^TA_B^{-1}b + (c_N^T-c_B^TA_B^{-1}A_N)x_N \quad s.t. \quad A_B^{-1}A_Nx_N \leqslant A_B^{-1}b, x_N \geqslant 0$$
+可以在 <https://docs.orbstack.dev> 上找到 orbstack 的更多用法。
 
-This is the canonical form of the original system w.r.t. $A_B$. We denote **$r^T := c^T-c^T_BA_B^{-1}A$** as the **verifying number**. Notice that $r_B^T=0$.
+在 orbstack - settings - system 中可以调整资源使用限制，鉴于综合/实现一般很慢，可以把限制调大一点。
 
-*Notation: we denote $\bar{b}:=A_B^{-1}b$ and $\bar{A_N}:=A_B^{-1}A_N$, then the canonical form is*
-$$\min r_N^Tx_N \quad s.t. \quad \bar{A_N}x_N \leqslant \bar{b}, x_N \geqslant 0$$
-similar to the original system.
+## Vivado
 
-### Primal simplex method
+这里直接提供了安装好的虚拟机镜像。
 
-**Theorem.1**
+（vivado 安装包有 27G，这个虚拟机压缩以后甚至只有 16G）
 
-> If $r_N \geqslant 0$ for a basic feasible solution $x_B\geqslant 0, x_N = 0$, then $x$ is an optimal solution.
+下载链接：<https://cloud.tsinghua.edu.cn/d/3c83fabe86da49d78fa0/>
 
-When $r_N \geqslant 0$, we know that the corresponding solution of LD:
+由于你清云盘的神秘特性，文件只能分片上传，下载所有文件后，通过以下命令合并：
 
-$$\max b^Ty \quad s.t. \quad A^Ty \leqslant c$$
+```sh
+$ cat vivado.tar.zst.part.* > vivado.tar.zst
+```
 
-has a feasible solution $y=(A_B^{-1})^Tc_B$ since $r=c-A^Ty$. In this case $0=r_B^Tx_B+r_N^Tx_N=r^Tx=c^Tx-y^Tb\ (b=Ax)$, and thus by the strong duality theorem $x$ is optimal.
+sha256 校验：
 
-*Note: $r$ is actually the dual gap vector.*
+```
+$ sha256 vivado.tar.zst
+SHA256 (vivado.tar.zst) = 2d4cce1d7e2f098066ae1638ca9825f498e41df9c04e43dfd6cdb7708cd545c1
+```
 
-**Theorem.2**
+在 orbstack 中 Linux Machines 标签页下导入即可。在终端中使用
 
-> If the condition of Thm.1. doesn't hold, that is, there is a negative element in $r_N$ (suppose the $s$ th element), then: 
-- If the corresponding column $(\bar{A_N})_s \leqslant 0$, then the system is unbounded.
-- If not, then there is a better basic feasible solution $x'$.
+```sh
+$ orb -m vivado
+```
 
-*tips: the crucial point here is changing the element $(x_N)_s$ (1) or changing $(\bar{A_N})_s$ into the basis $B$ and, consequently, leaving one out (2).*
+即可启动虚拟机。初始用户 jack，初始密码 123456 （虽然应该用不上），初始 shell 为 fish。
 
-- If $(\bar{A_N})_s \leqslant 0$, then we can increase $(x_N)_s$ by $\alpha$ where $\alpha$ is any positive number (not necessarily keeping $x$ basic) while still keeping $\bar{A_N}x_N' < \bar{A_N}x_N \leqslant \bar{b}$. Notice that the objective $r_Nx_N$ is reduced by $\alpha (r_N)_s(x_N)_s$, thus the system is unbounded.
-- If there is a positive element in $(\bar{A_N})_s$ for any $(r_N)_s < 0$. Trivially the procedure above cannot work for infinity because at some point the constraint $\bar{A_N}x_N' \leqslant \bar{b}$ will break. Consider inducing $s$ in $B$ and choosing one column in $B$ to pick out. A natural idea is to increase $\alpha$ as much as possible until one element in $x_B$ is 'critical to 0' -- increasing $\alpha$ any further will bring it negative, since $x_B$ is solvable.  
-The rest is simple to derive (keep in mind that $x_N=0$ and $i$ should be a **row** index): $$\alpha = \min_i\{\frac{(\bar{b}-\bar{A_N}x_N)_i}{(\bar{A_N})_{is}}=\frac{\bar{b}_i}{(\bar{A_N})_{is}}, (\bar{A_N})_{is} > 0\}$$ 
-also called minimum ration test (MRT).  
-The corresponding argmin $i$ can be the index of basic vector left out, as $(\bar{A_N}x_N)_i=\bar{b}_i$ and thus $x_i=0$.
-- In practice, there may be multiple $s$ and $i$. We require both to be minimal to avoid circulation in the simplex method, namely the *Bland rule*.
-- The new basic feasible solution $x'$ created is only one element different that the original solution $x$, called **adjacent basic solutions
+## GUI
 
-> Notice that the procedure needs to keep $\alpha > 0$. This is normally kept when $\bar{b}_i > 0\ \quad i.e. \quad x_B$ 
-doesn't degenerate.
+orbstack 没有提供 xserver。在 macos 中下载安装 xquartz，在 Settings - Security 中勾选 Allow connection from network clients （即允许通过网络连接），同时保持 Authenticate connections 为勾选状态。
 
-*Ex: $A_B$ is kept reversible in the procedure, but why?*
+在 vivado 虚拟机中，需要配置 DISPLAY 以及 xauth 的 cookie。在用户目录中，通过上箭头查找历史记录可以找到如下（毫无原则的）命令：
 
-### Dual simplex method
+```sh
+$ export DISPLAY=host.docker.internal:0 && xauth add host.docker.internal:0 . (mac xauth list | tail -n 1 | cut -d " " -f 5)
+```
 
-The dual simplex method is similar to primal simplex, except that we keep $r \geqslant 0$ while changing feasible $y=(A_B^{-1})^Tc_B$ ($B$ is a changing basis). Notice that $x_N=r_B=0$, thus $r$ and $x$ are complementary and $r^Tx=0$. The procedure ends until we have a feasible primal solution $\bar{b}=x_B \geqslant 0$. By then the dual gap is kept 0, and both solutions are automatically optimal.
+在确保 macos 中的 xquartz 开启后，运行此命令，~~大概率~~ 就能配置好。欢迎大家研究一下 xauth 并给个更靠谱的方式。
 
-> *In primal simplex, we keep $\bar{b} \geqslant 0$ and tries to make $y$ feasible, $\quad i.e.\quad$ $r \geqslant 0$.*, which is in some ways symmetric.
+可以在终端中运行 `xeyes` 检测，如果看到一双眼睛则配置成功。
 
-We can also rewrite the dual problem as:
+## Vivado
 
-$$\max \bar{b}^Ty^* \quad s.t. \quad (A_B^{-1}A)^Ty^* \leqslant c$$
-where $y^*=A_B^Ty$ has domain $\mathbb{R}^m$ since $A_B$ is reversible.
+在用户目录中，（同样可以在历史记录中找到）运行：
 
-**Theorem 1** 
+```sh
+$ ./vivado/Vivado/2019.2/bin/vivado
+```
 
-> If $\bar{b} \geqslant 0$, then the current $y$ and the corresponding $x$ is optimal.
+即可启动 Vivado。
 
-Trivial according to the analysis above.
+Vivado 的文本编辑器比较简单，可以选择将其改成 macos 中的 vscode。具体的，在 orbstack 虚拟机中可以通过 `mac [command...]` 来在 MacOS 中执行命令，同时会自动处理好文件路径。
+将 Vivado 的编辑器改为 `mac code ...` 即可。
 
-**Theorem 2**
+## USB
 
-> If there is a negative element in $\bar{b}$, suppose $\bar{b}_s$, then:
+orbstack 目前还不支持 usb passthrough，所以没法让 vivado 检测到 fpga 并进行烧录。
 
-- If the correspoding row $(\bar{A}_N)_s \geqslant 0$, then the LP is unfeasible.
-- If there is a element $(\bar{A}_N)_{si} < 0$, then we can transit to a better basis $B$ while improving the current optimal value.
+目前的解决方案是，使用 vivado 导出 bitstream，再在 macos 中通过 openfpgaloader 烧录。
 
-*tips: the proof is subtly different to the case of primal simplex.*
+通过 brew 安装 openfpgaloader：
 
-- In this case notice $x_B=\bar{b}-\bar{A_N}x_N$, thus we know that $(x_B)_s < 0$ whatever the choice of $x_N \geqslant 0$ (notice that $(x_B)_s < 0$ itself is also irrelevant of the choice of $B$). Thus the LP is unfeasible.
+```sh
+brew install openfpgaloader
+```
 
-<!-- - In this case we should increase some $(x_N)_i$ to the extent that $r$ is 'critical to' 0, and then dispose $(x_B)_s$ out of $B$. Suppose we increase $(x_N)_i$ by $\alpha_i$, then similar to the case of primal simplex we have $\alpha_i=\frac{\bar{b}_s}{\bar{A_N}_{si}}, \bar{A_N}_{si} < 0$ -->
+如果你的 FPGA 一切正常，那么就可以用
 
-- In this case we should decrease $y^*_s$ as much as possible until 'critically' $((A_B^{-1}A)^{T}y^*)_i=c_i$ for some $i$, similar to the primal case we know that the **decrease** should be $\alpha =\min\{-\frac{c_i-(A_B^{-1}A)^Ty^*}{(A_B^{-1}A)^T_{is}}, (A_B^{-1}A)^T_{is}<0\} > 0$. Since $A_B^{-1}(A_B, A_N)=(I, A_B^{-1}A_N)$, this is equilavent to $\alpha =\min\{-\frac{c_i-(A_B^{-1}A_N)^Ty^*}{(A_B^{-1}A_N)^T_{is}}, (A_B^{-1}A_N)^T_{is}<0, i \in N\}$ (slight abuse of notation here) and thus by $(\bar{A_N})^Ty^*=A_N^Ty$ and $y=(A_B^{-1})^Tc_B$ we have $$\alpha =\min_i\{-\frac{c_i-(A_N^T(A_B^{-1})^Tc_B)_i}{(\bar{A_N})_{si}}, (\bar{A_N})_{si}<0, i \in N\}$$ this is equilavent to $$\alpha =\min_i\{-\frac{r_i}{(\bar{A_N})_{si}}, (\bar{A_N})_{si}<0, i \in N\}$$ *Again we only consider the case where $\alpha > 0 \quad i.e. \quad x_B$ does not degenerate.* 
-- To judge what exactly happened to $B$ when we change $y^*$, we examine the **rows** of $A^T(A_B^{-1})^T$ are we actually solving $y$ from, that is, which of the inequalities are actually equalities. Clearly we added a new constraint $c_i-(A_N^T(A_B^{-1})^Tc_B)_i=0$, thus $x_i$ is the entering basic variable.  
-*Ex: Apparently $x_s$ should be the outgoing basic variable. Why is this the case? $\quad i.e. \quad$ why is the new $A_B$ still reversible?*
-- In practice we also choose $s$ and $i$ to be minimal.
+```sh
+openFPGALoader <YOUR_BITSTREAM.bit>
+```
 
-### Simplex algorithm in tableau
-
-The table method for primal simplex algorithm works like this:
-
-$B$     | $r_B$ | $r_N$ | $r^Tx$
--------- | ----- | ---- | -----
-Basic variables | $I$ | $\bar{A_N}$ | $\bar{b}$
-
-The matrix $\begin{pmatrix}I & \bar{A_N} \big| \bar{b}\end{pmatrix}$ is used to regularize any equivalent systems into the canonical system, which we'll come back later.
-
-Suppose there is an initial basic feasible solution. We first solve $r$ and write the $(A|b)$ matrix for $Ax=b$. Then we proceed with the following steps:
-
-1. Transform the system below into the canonical form. This can be done by transforming $A_B$ into $I$, which is equivalent to mutiplying $A_B^{-1}$ to the left.
-
-2. Recalculate $r$.
-
-3. Find the minimal column index with $r_B < 0$ and then calculate MRT for all index in $B$.
-
-4. remove the index with the lowest MRT and replace it with the entering basic variable. You don't have to calculate $A_B^{-1}$ all over again and just have to switch the column to transform in step 1.
-
-The tableau method for dual simplex algorithm works similarly, since all the elements that need to be calculated are the same.
+来烧录了，openFPGALoader 会自动检测连接到的 FPGA。
