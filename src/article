@@ -1,97 +1,40 @@
-# 如何在 Apple Silicon Mac 上 优雅地使用 Vivado
+## 网球正手学习
 
-TL;DR：Orbstack(rosetta x86) + xquartz + openfpgaloaer
+很多教练会说🙅‍不能抬脚🙅‍不能跳起来。
+其实是对于新手来说跳起来容易失去稳定性，合力容易中断。
+如何优雅+丝滑+省力？
+侧身拉拍👉屈膝引拍👉蹬转盯球👉重心前移👉小臂内旋👉随挥收拍
 
-## Requirements
+### 1⃣ 引拍阶段：像拧毛巾一样蓄力
+拉拍时左手扶着拍颈转肩，拍面轻轻朝下。
+站四分之三开放式站位（脚尖稍微朝外），身体转动幅度够大，力量才够足💪
+💡Tips：引拍别太急，等球落地弹起后再开始拉拍更从容
+	
+### 2⃣ 击球瞬间：甩鞭子发力法
+球来到身体前侧方时击球，手腕像扣着小杯子一样后翻，
+触球瞬间伸直手臂 “甩鞭子”，转腰转胯带动发力，不是光靠胳膊使劲哦～
+✨Tips：盯着球碰到拍面的瞬间再抬头，准度会更高！
+	
+### 3⃣ 随挥收尾：绕肩送拍不脱节
+打完别立刻停！球拍顺着方向绕肩挥到左肩外侧，后腿站稳，左腿轻轻向前带一步，平衡感瞬间拉满✨
+	
+把这 3 个细节练熟，打球会越来越有成就感！
 
-本地环境是 M4Pro + 48G RAM，但 orbstack 非常轻量，16G 内存应该就可以运行。需要 64G 硬盘空间。
+## 网球反手
 
-## Orbstack
-
-GPT：OrbStack 是一个高性能的 macOS 虚拟化和容器管理工具，主要用于运行 Docker 和 Linux 虚拟机。它被设计为 Docker Desktop 的轻量级替代品，具有更快的性能、更低的资源占用以及更好的 macOS 原生集成。
-
-TL；DR：Linux 虚拟机，rosetta x86，同时可以代替软工用的 Docker Desktop。
-
-安装：<https://orbstack.dev/download>
-
-先不着急把 docker desktop 扬了，第一次启动 orbstack 的时候可以把 docker 的容器迁移过来，迁移完了就可以摆脱又重又慢的 docker desktop 了。
-
-可以在 <https://docs.orbstack.dev> 上找到 orbstack 的更多用法。
-
-在 orbstack - settings - system 中可以调整资源使用限制，鉴于综合/实现一般很慢，可以把限制调大一点。
-
-## Vivado
-
-这里直接提供了安装好的虚拟机镜像。
-
-（vivado 安装包有 27G，这个虚拟机压缩以后甚至只有 16G）
-
-下载链接：<https://cloud.tsinghua.edu.cn/d/3c83fabe86da49d78fa0/>
-
-由于你清云盘的神秘特性，文件只能分片上传，下载所有文件后，通过以下命令合并：
-
-```sh
-$ cat vivado.tar.zst.part.* > vivado.tar.zst
-```
-
-sha256 校验：
-
-```
-$ sha256 vivado.tar.zst
-SHA256 (vivado.tar.zst) = 2d4cce1d7e2f098066ae1638ca9825f498e41df9c04e43dfd6cdb7708cd545c1
-```
-
-在 orbstack 中 Linux Machines 标签页下导入即可。在终端中使用
-
-```sh
-$ orb -m vivado
-```
-
-即可启动虚拟机。初始用户 jack，初始密码 123456 （虽然应该用不上），初始 shell 为 fish。
-
-## GUI
-
-orbstack 没有提供 xserver。在 macos 中下载安装 xquartz，在 Settings - Security 中勾选 Allow connection from network clients （即允许通过网络连接），同时保持 Authenticate connections 为勾选状态。
-
-在 vivado 虚拟机中，需要配置 DISPLAY 以及 xauth 的 cookie。在用户目录中，通过上箭头查找历史记录可以找到如下（毫无原则的）命令：
-
-```sh
-$ export DISPLAY=host.docker.internal:0 && xauth add host.docker.internal:0 . (mac xauth list | tail -n 1 | cut -d " " -f 5)
-```
-
-在确保 macos 中的 xquartz 开启后，运行此命令，~~大概率~~ 就能配置好。欢迎大家研究一下 xauth 并给个更靠谱的方式。
-
-可以在终端中运行 `xeyes` 检测，如果看到一双眼睛则配置成功。
-
-## Vivado
-
-在用户目录中，（同样可以在历史记录中找到）运行：
-
-```sh
-$ ./vivado/Vivado/2019.2/bin/vivado
-```
-
-即可启动 Vivado。
-
-Vivado 的文本编辑器比较简单，可以选择将其改成 macos 中的 vscode。具体的，在 orbstack 虚拟机中可以通过 `mac [command...]` 来在 MacOS 中执行命令，同时会自动处理好文件路径。
-将 Vivado 的编辑器改为 `mac code ...` 即可。
-
-## USB
-
-orbstack 目前还不支持 usb passthrough，所以没法让 vivado 检测到 fpga 并进行烧录。
-
-目前的解决方案是，使用 vivado 导出 bitstream，再在 macos 中通过 openfpgaloader 烧录。
-
-通过 brew 安装 openfpgaloader：
-
-```sh
-brew install openfpgaloader
-```
-
-如果你的 FPGA 一切正常，那么就可以用
-
-```sh
-openFPGALoader <YOUR_BITSTREAM.bit>
-```
-
-来烧录了，openFPGALoader 会自动检测连接到的 FPGA。
+### 1. 准备：早点转身 🚦
+看见球飞来 👀，立刻 侧身 ➡
+用身体转身，肩膀侧对网 🙆
+手拉拍到身边，别甩后面去 🙅
+	
+### 2. 击球：蹲推撞 🏋
+膝盖弯弯 ⬇，降重心蓄力
+后腿蹬地 👣，把身体推向前
+在身体前方把球"撞"出去 💥
+	
+### 3. 结束：挥手再见 👋
+球拍顺着方向 送出一段 ✈
+结束时拍头在肩膀上方 🙌
+重心完全到前脚上，站稳！
+	
+**💡口诀「早转身，蹲推撞，送到底」**
